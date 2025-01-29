@@ -2,11 +2,13 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
+#include <algorithm>
+#include <cmath>
 using namespace std;
 
-#define boardSize 6
+#define boardSize 4
 int board[boardSize][boardSize];
-const int TIME_LIMIT = 30;
+const int TIME_LIMIT = 15;
 
 // function prototypes
 void placeBead();
@@ -22,13 +24,13 @@ bool makeMove(int player, int srcRow, int srcCol, int desRow, int desCol);
 bool isEdible(int player, int srcRow, int srcCol, int desRow, int desCol);
 bool isMovable(int player, int srcRow, int srcCol, int desRow, int desCol);
 
-
+//FIXME:
 int main()
 {
     int currPlayer = 1; 
     char option;
 
-    cout << "Do you want to load a previous game?(y/n):";
+    cout << "Do you want to load a previous game? (y/n): ";
     cin >> option;
     if (option == 'y' || option == 'Y')
     {
@@ -47,19 +49,19 @@ int main()
 
         if (countBeads(currPlayer) == 0)
         {
-            cout << "Player " << currPlayer << " has no beads left.Player  "
+            cout << "Player " << currPlayer << " has no beads left. Player  "
                  << ((currPlayer == 1) ? 2 : 1) << " wins!" << endl;
             break;
         }
 
         if (!hasValidMoves(currPlayer))
         {
-            cout << "Player " << currPlayer << " is blocked . Player "
+            cout << "Player " << currPlayer << " is blocked. Player "
                  << ((currPlayer == 1) ? 2 : 1) << " wins!" << endl;
             break;
         }
 
-        auto start = chrono::steady_clock::now(); 
+        auto start = chrono::steady_clock::now();  // Start the timer
 
         while (true)
         {
@@ -67,6 +69,7 @@ int main()
             int srcRow, srcCol, desRow, desCol;
             cin >> srcRow >> srcCol >> desRow >> desCol;
 
+            // Check for quitting the game
             if (srcRow == -1 && srcCol == -1 && desRow == -1 && desCol == -1)
             {
                 cout << "Do you want to save the game before quitting? (y/n): ";
@@ -79,52 +82,37 @@ int main()
                 return 0;
             }
 
-            if (makeMove(currPlayer, srcRow, srcCol, desRow, desCol))
-            {
-                printBoard();
-                break; 
-            }
-
-          
+            // Check elapsed time
             auto end = chrono::steady_clock::now();
             auto elapsed = chrono::duration_cast<chrono::seconds>(end - start).count();
             if (elapsed >= TIME_LIMIT)
             {
-                cout << "Time's up! Player " << currPlayer << endl;
+                cout << "Time's up! Player " << currPlayer << "'s turn is over." << endl;
                 break;
+            }
+
+            // If valid move, update the board and break out of the loop
+            if (makeMove(currPlayer, srcRow, srcCol, desRow, desCol))
+            {
+                printBoard();
+                break;  // Exit the input loop if a valid move was made
+            }
+            else
+            {
+                cout << "Invalid move, try again." << endl;
             }
         }
 
-        currPlayer = (currPlayer == 1) ? 2 : 1;
+        currPlayer = (currPlayer == 1) ? 2 : 1;  // Switch player
     }
 
-    cout << "*Game Over!*" << endl;
+    cout << "****Game Over!****" << endl;
     return 0;
 }
 
-void saveGame(int currPlayer)
-{
-    ofstream file("saved_game.txt");
-    if (!file)
-    {
-        cout << "Error saving the game!" << endl;
-        return;
-    }
 
-    file << currPlayer << endl;
-    for (int i = 0; i < boardSize; i++)
-    {
-        for (int j = 0; j < boardSize; j++)
-        {
-            file << board[i][j] << " ";
-        }
-        file << endl;
-    }
 
-    file.close();
-    cout << "Game saved successfully!" << endl;
-}
-
+//FIXME:
 bool makeMove(int player, int srcRow, int srcCol, int desRow, int desCol)
 {
     if (!isValid(srcRow, srcCol) || !isValid(desRow, desCol))
@@ -158,6 +146,7 @@ bool makeMove(int player, int srcRow, int srcCol, int desRow, int desCol)
         int midRow = (srcRow + desRow) / 2;
         int midCol = (srcCol + desCol) / 2;
 
+        //FIXME:
         board[midRow][midCol] = 0; 
         board[desRow][desCol] = board[srcRow][srcCol];
         board[srcRow][srcCol] = 0;
@@ -172,58 +161,48 @@ bool makeMove(int player, int srcRow, int srcCol, int desRow, int desCol)
     }
 }
 
-//loads the game
-void loadGame(int &currPlayer)
-{
-    ifstream file("saved_game.txt");
-    if (!file)
-    {
-        cout << "No game found." << endl; 
-        cout << "Starting new game!" << endl;
-        createBoard();
-        return;
-    }
 
-    file >> currPlayer;
-    for (int i = 0; i < boardSize; i++)
-    {
-        for (int j = 0; j < boardSize; j++)
-        {
-            file >> board[i][j];
-        }
-    }
-
-    file.close();
-    cout << "##Game loaded successfully!" << endl;
+int calculateDistance(int srcRow, int srcCol, int desRow, int desCol) {
+    return sqrt(pow((srcRow - desRow), 2) + pow((srcCol - desCol), 2));
 }
 
+//FIXME:
 bool isMovable(int player, int srcRow, int srcCol, int desRow, int desCol)
 {
+    // if the source and destination is valid
     if (!isValid(srcRow, srcCol) || !isValid(desRow, desCol))
     {
         return false;
     }
+
+    // if the source is not empty
     if (isEmpty(srcRow, srcCol) || board[srcRow][srcCol] != player)
     {
         return false;
     }
+
+    // if the destination is not empty
     if (!isEmpty(desRow, desCol))
     {
         return false;
     }
-    if (abs(srcRow - desRow) > 1 || abs(srcCol - desCol) > 1)
-    {
+
+    //FIXME: replace with the calculate  function
+    if(calculateDistance( srcRow,  srcCol,  desRow,  desCol) != 1){
         return false;
     }
     return true;
 }
 
+//FIXME:
 bool isEdible(int player, int srcRow, int srcCol, int desRow, int desCol)
 {
+    // if the source and the destination is valid
     if (!isValid(srcRow, srcCol) || !isValid(desRow, desCol))
     {
         return false;
     }
+
     if (isEmpty(srcRow, srcCol) || board[srcRow][srcCol] != player)
     {
         return false;
@@ -245,24 +224,18 @@ bool isEdible(int player, int srcRow, int srcCol, int desRow, int desCol)
     {
         return false;
     } 
-    if (abs(srcRow - desRow == 2) && abs(srcCol - desCol == 2)) {
+    if (calculateDistance(srcRow, srcCol, desRow, desCol) == 2) {
         return true;
     }
 
     return false;
 }
 
-bool isEmpty(int row, int column)
-{
-    return board[row][column] == 0;
-}
 
-bool isValid(int row, int column)
-{
-    return (row >= 0 && column >= 0 && row < boardSize && column < boardSize);
-}
 
-//checks surronding 2 spaces for valid move
+
+//FIXME:
+//checks surrounding 2 spaces for valid move
 bool hasValidMoves(int player)
 {
     for (int i = 0; i < boardSize; i++)
@@ -281,8 +254,11 @@ bool hasValidMoves(int player)
                             continue;
                         int newRow = i + di;
                         int newCol = j + dj;
-                        if (isMovable(player, i, j, newRow, newCol) || isEdible(player, i, j, newRow, newCol))
+                        if ( isEdible(player, i, j, newRow, newCol))
                         {
+                            return true;
+                        }
+                        else if(isMovable(player, i, j, newRow, newCol)) {
                             return true;
                         }
                     }
@@ -356,4 +332,62 @@ int countBeads(int player)
         }
     }
     return count;
+}
+
+bool isEmpty(int row, int column)
+{
+    return board[row][column] == 0;
+}
+
+bool isValid(int row, int column)
+{
+    return (row >= 0 && column >= 0 && row < boardSize && column < boardSize);
+}
+
+//loads the game
+void loadGame(int &currPlayer)
+{
+    ifstream file("saved_game.txt");
+    if (!file)
+    {
+        cout << "No game found." << endl; 
+        cout << "Starting new game!" << endl;
+        createBoard();
+        return;
+    }
+
+    file >> currPlayer;
+    for (int i = 0; i < boardSize; i++)
+    {
+        for (int j = 0; j < boardSize; j++)
+        {
+            file >> board[i][j];
+        }
+    }
+
+    file.close();
+    cout << "##Game loaded successfully!" << endl;
+}
+
+void saveGame(int currPlayer)
+{
+    ofstream file("saved_game.txt");
+    if (!file)
+    {
+        cout << "Error saving the game!" << endl;
+        return;
+    }
+
+    file << currPlayer << endl;
+    for (int i = 0; i < boardSize; i++)
+    {
+        for (int j = 0; j < boardSize; j++)
+        {
+            file << board[i][j] << " ";
+        }
+        file << endl;
+    }
+
+    file.close();
+    cout << "***Game saved successfully!***" << endl;
 }
