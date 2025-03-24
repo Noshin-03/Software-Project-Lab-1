@@ -5,6 +5,20 @@
 #include <chrono>
 #include <sstream>
 #include <bits/stdc++.h> // don't change this line
+using namespace std;
+
+// Function definitions
+
+const int GRID_SIZE = 6;
+const int CELL_SIZE = 100;
+const int BOARD_SIZE = GRID_SIZE * CELL_SIZE;
+const int WINDOW_HEIGHT = BOARD_SIZE + 200; // Increased height for the Exit button
+const int WINDOW_WIDTH = BOARD_SIZE;
+
+int board[GRID_SIZE][GRID_SIZE] = {0};
+int currentPlayer = 1; // 1 for Red, 2 for Blue
+std::chrono::time_point<std::chrono::steady_clock> startTime;
+const int TURN_TIME_LIMIT = 30; // 30 seconds per turn
 
 // Function prototypes
 bool isValid(int row, int col);
@@ -19,19 +33,15 @@ void loadBoard();
 void switchPlayer();
 int getTimeRemaining();
 bool checkWinCondition(sf::Text &winText);
-void playerVsComputer(sf::RenderWindow &window, sf::Font &font);
+bool playerVsComputer(sf::RenderWindow &window, sf::Font &font);
 bool computerMove();
+void startGame();
 
-const int GRID_SIZE = 6;
-const int CELL_SIZE = 100;
-const int BOARD_SIZE = GRID_SIZE * CELL_SIZE;
-const int WINDOW_HEIGHT = BOARD_SIZE + 200; // Increased height for the Exit button
-const int WINDOW_WIDTH = BOARD_SIZE;
-
-int board[GRID_SIZE][GRID_SIZE] = {0};
-int currentPlayer = 1; // 1 for Red, 2 for Blue
-std::chrono::time_point<std::chrono::steady_clock> startTime;
-const int TURN_TIME_LIMIT = 30; // 30 seconds per turn
+int main()
+{
+    startGame(); // Call the refactored startGame function
+    return 0;
+}
 
 // Function to check valid position
 bool isValid(int row, int col)
@@ -259,7 +269,7 @@ bool checkWinCondition(sf::Text &winText)
     return false;
 }
 
-void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
+bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
 {
     // std::cout << "Player vs Computer mode selected." << std::endl;
 
@@ -292,17 +302,21 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
 
     std::vector<std::pair<int, int>> possibleMoves; // Define possibleMoves to track valid moves
 
-    sf::Text saveButton(" Save", font, 30);
+    sf::Text saveButton("  Save", font, 30);
     saveButton.setPosition(50, BOARD_SIZE + 20);
     saveButton.setFillColor(sf::Color::Black);
 
-    sf::Text loadButton(" Load", font, 30);
+    sf::Text loadButton("  Load", font, 30);
     loadButton.setPosition(200, BOARD_SIZE + 20);
     loadButton.setFillColor(sf::Color::Black);
 
-    sf::Text exitButton(" Exit", font, 30);
+    sf::Text exitButton("  Exit", font, 30);
     exitButton.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
     exitButton.setFillColor(sf::Color::Black);
+
+    sf::Text mainMenuButton("Main Menu", font, 30);
+    mainMenuButton.setPosition(350, BOARD_SIZE + 90); // Position next to the Exit button
+    mainMenuButton.setFillColor(sf::Color::Black);
 
     sf::Text timerText("", font, 30);
     timerText.setPosition(350, BOARD_SIZE + 20); // Adjusted position next to Load button
@@ -320,6 +334,10 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
     exitButtonBg.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
     exitButtonBg.setFillColor(sf::Color::Red);
 
+    sf::RectangleShape mainMenuButtonBg(sf::Vector2f(150, 50));
+    mainMenuButtonBg.setPosition(350, BOARD_SIZE + 90);
+    mainMenuButtonBg.setFillColor(sf::Color::Yellow);
+
     auto computerMoveStartTime = std::chrono::steady_clock::now(); // Track when the computer's turn starts
 
     sf::Text winText("", font, 40); // Winning message
@@ -327,6 +345,7 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
     winText.setFillColor(sf::Color::Black);
 
     bool gameWon = false;
+    bool returnToMainMenu = false;
 
     while (window.isOpen())
     {
@@ -358,6 +377,11 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
                         else if (exitButtonBg.getGlobalBounds().contains(x, y))
                         {
                             window.close(); // Exit the game
+                            exit(0);        // Ensure the program terminates
+                        }
+                        else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
+                        {
+                            returnToMainMenu = true; // Return to the main menu
                         }
                     }
                     else if (currentPlayer == 1 && !gameWon)
@@ -401,6 +425,12 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
             }
         }
 
+        // Return to the main menu if the button is clicked
+        if (returnToMainMenu)
+        {
+            return true; // Indicate that the user wants to return to the main menu
+        }
+
         // Check if a player has won
         if (!gameWon && checkWinCondition(winText))
         {
@@ -421,9 +451,38 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
             window.clear(sf::Color::White);
             window.draw(winText);
             window.display();
-            sf::sleep(sf::seconds(3)); // Pause for 3 seconds before closing
-            window.close();
-            break;
+
+            // Keep the event loop active to allow interaction with buttons
+            while (window.isOpen())
+            {
+                sf::Event event;
+                while (window.pollEvent(event))
+                {
+                    if (event.type == sf::Event::Closed)
+                    {
+                        window.close();
+                        exit(0);
+                    }
+                    else if (event.type == sf::Event::MouseButtonPressed)
+                    {
+                        if (event.mouseButton.button == sf::Mouse::Left)
+                        {
+                            int x = event.mouseButton.x;
+                            int y = event.mouseButton.y;
+
+                            if (exitButtonBg.getGlobalBounds().contains(x, y))
+                            {
+                                window.close(); // Exit the game
+                                exit(0);        // Ensure the program terminates
+                            }
+                            else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
+                            {
+                                return true; // Return to the main menu
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Timer logic
@@ -500,9 +559,11 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
         window.draw(saveButtonBg);
         window.draw(loadButtonBg);
         window.draw(exitButtonBg);
+        window.draw(mainMenuButtonBg);
         window.draw(saveButton);
         window.draw(loadButton);
         window.draw(exitButton);
+        window.draw(mainMenuButton);
 
         std::stringstream ss;
         ss << "Time: " << timeRemaining << "s";
@@ -517,6 +578,8 @@ void playerVsComputer(sf::RenderWindow &window, sf::Font &font)
 
         window.display();
     }
+
+    return false; // Indicate that the game ended without returning to the main menu
 }
 
 bool computerMove()
@@ -576,7 +639,7 @@ bool computerMove()
     return false; // No valid moves
 }
 
-int main()
+void startGame()
 {
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "6x6 Bead Grid");
 
@@ -646,8 +709,10 @@ int main()
             if (isPlayerVsComputer)
             {
                 // Start Player vs Computer game
-                playerVsComputer(window, font);
-                gameStarted = false; // Reset to show the menu after the game ends
+                if (playerVsComputer(window, font))
+                {
+                    gameStarted = false; // Reset to show the menu after returning to the main menu
+                }
             }
             else
             {
@@ -660,17 +725,21 @@ int main()
                     for (int j = 0; j < GRID_SIZE; j++)
                         board[i][j] = 2; // Blue beads for Player 2
 
-                sf::Text saveButton(" Save", font, 30);
+                sf::Text saveButton("  Save", font, 30);
                 saveButton.setPosition(50, BOARD_SIZE + 20);
                 saveButton.setFillColor(sf::Color::Black);
 
-                sf::Text loadButton(" Load", font, 30);
+                sf::Text loadButton("  Load", font, 30);
                 loadButton.setPosition(200, BOARD_SIZE + 20);
                 loadButton.setFillColor(sf::Color::Black);
 
-                sf::Text exitButton(" Exit", font, 30);
+                sf::Text exitButton("  Exit", font, 30);
                 exitButton.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
                 exitButton.setFillColor(sf::Color::Black);
+
+                sf::Text mainMenuButton("Main Menu", font, 30);
+                mainMenuButton.setPosition(350, BOARD_SIZE + 90); // Position next to the Exit button
+                mainMenuButton.setFillColor(sf::Color::Black);
 
                 sf::Text timerText("", font, 30);
                 timerText.setPosition(350, BOARD_SIZE + 20); // Adjusted position next to Load button
@@ -688,6 +757,10 @@ int main()
                 exitButtonBg.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
                 exitButtonBg.setFillColor(sf::Color::Red);
 
+                sf::RectangleShape mainMenuButtonBg(sf::Vector2f(150, 50));
+                mainMenuButtonBg.setPosition(350, BOARD_SIZE + 90);
+                mainMenuButtonBg.setFillColor(sf::Color::Yellow);
+
                 sf::Text winText("", font, 40);
                 winText.setPosition(50, BOARD_SIZE / 2 - 20);
                 winText.setFillColor(sf::Color::Black);
@@ -698,6 +771,7 @@ int main()
                 std::vector<std::pair<int, int>> possibleMoves;
 
                 bool gameWon = false;
+                bool returnToMainMenu = false;
 
                 while (window.isOpen())
                 {
@@ -726,6 +800,11 @@ int main()
                                     else if (exitButtonBg.getGlobalBounds().contains(x, y))
                                     {
                                         window.close(); // Exit the game
+                                        exit(0);        // Ensure the program terminates
+                                    }
+                                    else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
+                                    {
+                                        returnToMainMenu = true; // Return to the main menu
                                     }
                                 }
                                 else
@@ -760,6 +839,13 @@ int main()
                                 }
                             }
                         }
+                    }
+
+                    // Return to the main menu if the button is clicked
+                    if (returnToMainMenu)
+                    {
+                        gameStarted = false; // Reset to show the menu
+                        break;
                     }
 
                     // Check if time expired
@@ -823,15 +909,50 @@ int main()
                     window.draw(saveButtonBg);
                     window.draw(loadButtonBg);
                     window.draw(exitButtonBg);
+                    window.draw(mainMenuButtonBg);
                     window.draw(saveButton);
                     window.draw(loadButton);
                     window.draw(exitButton);
+                    window.draw(mainMenuButton);
                     window.draw(timerText); // Timer is now next to Load button
 
                     // Draw win message if game is won
                     if (gameWon)
                     {
                         window.draw(winText);
+
+                        // Keep the event loop active to allow interaction with buttons
+                        while (window.isOpen())
+                        {
+                            sf::Event event;
+                            while (window.pollEvent(event))
+                            {
+                                if (event.type == sf::Event::Closed)
+                                {
+                                    window.close();
+                                    exit(0);
+                                }
+                                else if (event.type == sf::Event::MouseButtonPressed)
+                                {
+                                    if (event.mouseButton.button == sf::Mouse::Left)
+                                    {
+                                        int x = event.mouseButton.x;
+                                        int y = event.mouseButton.y;
+
+                                        if (exitButtonBg.getGlobalBounds().contains(x, y))
+                                        {
+                                            window.close(); // Exit the game
+                                            exit(0);        // Ensure the program terminates
+                                        }
+                                        else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
+                                        {
+                                            returnToMainMenu = true; // Return to the main menu
+                                            return;                  // Exit the loop and reset the game
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     window.display();
@@ -841,6 +962,4 @@ int main()
 
         window.display();
     }
-
-    return 0;
 }
