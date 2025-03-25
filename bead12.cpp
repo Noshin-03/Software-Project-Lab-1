@@ -4,21 +4,10 @@
 #include <fstream>
 #include <chrono>
 #include <sstream>
-#include <bits/stdc++.h> // don't change this line
+#include <iostream>
 using namespace std;
+using namespace sf;
 
-// Function definitions
-
-const int GRID_SIZE = 6;
-const int CELL_SIZE = 100;
-const int BOARD_SIZE = GRID_SIZE * CELL_SIZE;
-const int WINDOW_HEIGHT = BOARD_SIZE + 200; // Increased height for the Exit button
-const int WINDOW_WIDTH = BOARD_SIZE;
-
-int board[GRID_SIZE][GRID_SIZE] = {0};
-int currentPlayer = 1; // 1 for Red, 2 for Blue
-std::chrono::time_point<std::chrono::steady_clock> startTime;
-const int TURN_TIME_LIMIT = 30; // 30 seconds per turn
 
 // Function prototypes
 bool isValid(int row, int col);
@@ -32,14 +21,26 @@ void saveBoard();
 void loadBoard();
 void switchPlayer();
 int getTimeRemaining();
-bool checkWinCondition(sf::Text &winText);
-bool playerVsComputer(sf::RenderWindow &window, sf::Font &font);
+bool checkWinCondition(Text &winText);
+void playerVsComputer(RenderWindow &window, Font &font);
 bool computerMove();
 void startGame();
 
+const int GRID_SIZE = 6;
+const int CELL_SIZE = 100;
+const int BOARD_SIZE = GRID_SIZE * CELL_SIZE;
+const int WINDOW_HEIGHT = BOARD_SIZE + 200; // Increased height for the Exit button
+const int WINDOW_WIDTH = BOARD_SIZE;
+
+int board[GRID_SIZE][GRID_SIZE] = {0};
+int currentPlayer = 1; // 1 for Red, 2 for Blue
+chrono::time_point<chrono::steady_clock> startTime;
+const int TURN_TIME_LIMIT = 30; // 30 seconds per turn
+
 int main()
 {
-    startGame(); // Call the refactored startGame function
+    startGame();
+
     return 0;
 }
 
@@ -58,12 +59,12 @@ bool isEmpty(int row, int col)
 // Calculate distance between two points
 int calculateDistance(int srcRow, int srcCol, int desRow, int desCol)
 {
-    if ((std::pow(srcRow - desRow, 2) + std::pow(srcCol - desCol, 2)) == 5)
+    if ((pow(srcRow - desRow, 2) + pow(srcCol - desCol, 2)) == 5)
     {
-        return 3; // don't change this value
+        return 3; 
     }
-    return std::sqrt(std::pow(srcRow - desRow, 2) + std::pow(srcCol - desCol, 2));
-    // don't change this value
+
+    return sqrt(pow(srcRow - desRow, 2) + pow(srcCol - desCol, 2));
 }
 
 // Check if a bead can move
@@ -191,7 +192,7 @@ bool makeMove(int player, int srcRow, int srcCol, int desRow, int desCol)
 // Save game state
 void saveBoard()
 {
-    std::ofstream file("board_save.txt");
+    ofstream file("board_save.txt");
     for (int i = 0; i < GRID_SIZE; ++i)
     {
         for (int j = 0; j < GRID_SIZE; ++j)
@@ -206,7 +207,7 @@ void saveBoard()
 // Load game state
 void loadBoard()
 {
-    std::ifstream file("board_save.txt");
+    ifstream file("board_save.txt");
     if (file.is_open())
     {
         for (int i = 0; i < GRID_SIZE; ++i)
@@ -224,18 +225,18 @@ void loadBoard()
 void switchPlayer()
 {
     currentPlayer = (currentPlayer == 1) ? 2 : 1;
-    startTime = std::chrono::steady_clock::now();
+    startTime = chrono::steady_clock::now();
 }
 
 // Get remaining time before auto-switch
 int getTimeRemaining()
 {
-    auto currentTime = std::chrono::steady_clock::now();
-    int elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
+    auto currentTime = chrono::steady_clock::now();
+    int elapsedTime = chrono::duration_cast<chrono::seconds>(currentTime - startTime).count();
     return TURN_TIME_LIMIT - elapsedTime;
 }
 
-bool checkWinCondition(sf::Text &winText)
+bool checkWinCondition(Text &winText)
 {
     int player1Beads = 0, player2Beads = 0;
 
@@ -269,9 +270,8 @@ bool checkWinCondition(sf::Text &winText)
     return false;
 }
 
-bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
+void playerVsComputer(RenderWindow &window, Font &font)
 {
-    // std::cout << "Player vs Computer mode selected." << std::endl;
 
     // Initialize the board with default positions for Player 1 and Player 2
     for (int i = 0; i < GRID_SIZE; i++)
@@ -295,74 +295,82 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
 
     int currentPlayer = 1;          // Player 1 starts
     int timeLeft = TURN_TIME_LIMIT; // 30 seconds for each turn
-    auto startTime = std::chrono::steady_clock::now();
-    std::string message = ""; // Message to display below the timer
+    auto startTime = chrono::steady_clock::now();
+    string message = ""; // Message to display below the timer
 
     int srcRow = -1, srcCol = -1; // Track the selected source bead
 
-    std::vector<std::pair<int, int>> possibleMoves; // Define possibleMoves to track valid moves
+    vector<pair<int, int>> possibleMoves; // Define possibleMoves to track valid moves
 
-    sf::Text saveButton("  Save", font, 30);
+    Text saveButton(" Save", font, 30);
     saveButton.setPosition(50, BOARD_SIZE + 20);
-    saveButton.setFillColor(sf::Color::Black);
+    saveButton.setFillColor(Color::Black);
 
-    sf::Text loadButton("  Load", font, 30);
+    Text loadButton(" Load", font, 30);
     loadButton.setPosition(200, BOARD_SIZE + 20);
-    loadButton.setFillColor(sf::Color::Black);
+    loadButton.setFillColor(Color::Black);
 
-    sf::Text exitButton("  Exit", font, 30);
+    Text exitButton(" Exit", font, 30);
     exitButton.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
-    exitButton.setFillColor(sf::Color::Black);
+    exitButton.setFillColor(Color::Black);
 
-    sf::Text mainMenuButton("Main Menu", font, 30);
+    Text mainMenuButton("Main Menu", font, 30);
     mainMenuButton.setPosition(350, BOARD_SIZE + 90); // Position next to the Exit button
-    mainMenuButton.setFillColor(sf::Color::Black);
+    mainMenuButton.setFillColor(Color::Black);
 
-    sf::Text timerText("", font, 30);
+    Text timerText("", font, 30);
     timerText.setPosition(350, BOARD_SIZE + 20); // Adjusted position next to Load button
-    timerText.setFillColor(sf::Color::Black);
+    timerText.setFillColor(Color::Black);
 
-    sf::RectangleShape saveButtonBg(sf::Vector2f(100, 50));
+    RectangleShape saveButtonBg(Vector2f(100, 50));
     saveButtonBg.setPosition(50, BOARD_SIZE + 20);
-    saveButtonBg.setFillColor(sf::Color::Cyan);
+    saveButtonBg.setFillColor(Color::Cyan);
 
-    sf::RectangleShape loadButtonBg(sf::Vector2f(100, 50));
+    RectangleShape loadButtonBg(Vector2f(100, 50));
     loadButtonBg.setPosition(200, BOARD_SIZE + 20);
-    loadButtonBg.setFillColor(sf::Color::Cyan);
+    loadButtonBg.setFillColor(Color::Cyan);
 
-    sf::RectangleShape exitButtonBg(sf::Vector2f(100, 50));
+    RectangleShape exitButtonBg(Vector2f(100, 50));
     exitButtonBg.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
-    exitButtonBg.setFillColor(sf::Color::Red);
+    exitButtonBg.setFillColor(Color::Red);
 
-    sf::RectangleShape mainMenuButtonBg(sf::Vector2f(150, 50));
+    RectangleShape mainMenuButtonBg(Vector2f(150, 50));
     mainMenuButtonBg.setPosition(350, BOARD_SIZE + 90);
-    mainMenuButtonBg.setFillColor(sf::Color::Yellow);
+    mainMenuButtonBg.setFillColor(Color::Yellow);
 
-    auto computerMoveStartTime = std::chrono::steady_clock::now(); // Track when the computer's turn starts
+    auto computerMoveStartTime = chrono::steady_clock::now(); // Track when the computer's turn starts
 
-    sf::Text winText("", font, 40); // Winning message
+    Text winText("", font, 40); // Winning message
     winText.setPosition(50, BOARD_SIZE / 2 - 20);
-    winText.setFillColor(sf::Color::Black);
+    winText.setFillColor(Color::Black);
 
     bool gameWon = false;
     bool returnToMainMenu = false;
 
     while (window.isOpen())
     {
-        sf::Event event;
+        Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            if (event.type == Event::Closed)
             {
                 window.close();
                 exit(0);
             }
-            else if (event.type == sf::Event::MouseButtonPressed)
+            else if (event.type == Event::MouseButtonPressed)
             {
-                if (event.mouseButton.button == sf::Mouse::Left)
+                if (event.mouseButton.button == Mouse::Left)
                 {
                     int x = event.mouseButton.x;
                     int y = event.mouseButton.y;
+
+                    if (gameWon)
+                    {
+                        if (exitButtonBg.getGlobalBounds().contains(x, y))
+                        {
+                            window.close(); // Exit the game
+                        }
+                    }
 
                     if (y > BOARD_SIZE)
                     {
@@ -377,7 +385,6 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
                         else if (exitButtonBg.getGlobalBounds().contains(x, y))
                         {
                             window.close(); // Exit the game
-                            exit(0);        // Ensure the program terminates
                         }
                         else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
                         {
@@ -412,8 +419,8 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
                                 if (makeMove(currentPlayer, srcRow, srcCol, row, col))
                                 {
                                     currentPlayer = 2;                                        // Switch to computer
-                                    startTime = std::chrono::steady_clock::now();             // Reset timer
-                                    computerMoveStartTime = std::chrono::steady_clock::now(); // Reset computer move timer
+                                    startTime = chrono::steady_clock::now();             // Reset timer
+                                    computerMoveStartTime = chrono::steady_clock::now(); // Reset computer move timer
                                 }
                                 srcRow = -1;
                                 srcCol = -1;
@@ -428,56 +435,61 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
         // Return to the main menu if the button is clicked
         if (returnToMainMenu)
         {
-            return true; // Indicate that the user wants to return to the main menu
+            return; // Exit the function to go back to the main menu
         }
 
         // Check if a player has won
         if (!gameWon && checkWinCondition(winText))
         {
             gameWon = true;
-            if (currentPlayer == 2)
-            {
-                winText.setString("Computer Wins!"); // Display message when Player 2 (Computer) wins
-            }
-            else
-            {
-                winText.setString("Player 1 Wins! Congratulations!"); // Display message when Player 1 wins
-            }
         }
 
         // Stop the timer and end the game if one player has no beads left
         if (gameWon)
         {
-            window.clear(sf::Color::White);
-            window.draw(winText);
-            window.display();
+            Text mainMenuButton("Main Menu", font, 30);
+            mainMenuButton.setPosition(200, BOARD_SIZE + 50);
+            mainMenuButton.setFillColor(Color::Black);
 
-            // Keep the event loop active to allow interaction with buttons
+            RectangleShape mainMenuButtonBg(Vector2f(150, 50));
+            mainMenuButtonBg.setPosition(190, BOARD_SIZE + 50);
+            mainMenuButtonBg.setFillColor(Color::Yellow);
+
             while (window.isOpen())
             {
-                sf::Event event;
+                window.clear(Color::White); // Clear the window with white color
+                window.draw(winText);
+                window.draw(mainMenuButtonBg);
+                window.draw(mainMenuButton);
+                window.display();
+
+                Event event;
                 while (window.pollEvent(event))
                 {
-                    if (event.type == sf::Event::Closed)
+                    if (event.type == Event::Closed)
                     {
                         window.close();
                         exit(0);
                     }
-                    else if (event.type == sf::Event::MouseButtonPressed)
+                    else if (event.type == Event::MouseButtonPressed)
                     {
-                        if (event.mouseButton.button == sf::Mouse::Left)
+                        if (event.mouseButton.button == Mouse::Left)
                         {
                             int x = event.mouseButton.x;
                             int y = event.mouseButton.y;
 
-                            if (exitButtonBg.getGlobalBounds().contains(x, y))
+                            if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
                             {
-                                window.close(); // Exit the game
-                                exit(0);        // Ensure the program terminates
-                            }
-                            else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
-                            {
-                                return true; // Return to the main menu
+                                // Reset the game state and return to the main menu
+                                for (int i = 0; i < GRID_SIZE; ++i)
+                                {
+                                    for (int j = 0; j < GRID_SIZE; ++j)
+                                    {
+                                        board[i][j] = 0;
+                                    }
+                                }
+                                currentPlayer = 1; // Reset to Player 1
+                                return; // Exit the loop and show the main menu
                             }
                         }
                     }
@@ -486,60 +498,60 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
         }
 
         // Timer logic
-        int timeRemaining = TURN_TIME_LIMIT - std::chrono::duration_cast<std::chrono::seconds>(
-                                                  std::chrono::steady_clock::now() - startTime)
+        int timeRemaining = TURN_TIME_LIMIT - chrono::duration_cast<chrono::seconds>(
+                                                  chrono::steady_clock::now() - startTime)
                                                   .count();
         if (timeRemaining <= 0 && !gameWon)
         {
             currentPlayer = (currentPlayer == 1) ? 2 : 1; // Switch player
-            startTime = std::chrono::steady_clock::now(); // Reset timer
+            startTime = chrono::steady_clock::now(); // Reset timer
             if (currentPlayer == 2)
             {
-                computerMoveStartTime = std::chrono::steady_clock::now(); // Reset computer move timer
+                computerMoveStartTime = chrono::steady_clock::now(); // Reset computer move timer
             }
         }
 
         // Computer's move
         if (currentPlayer == 2 && !gameWon)
         {
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(
-                                   std::chrono::steady_clock::now() - computerMoveStartTime)
+            auto elapsedTime = chrono::duration_cast<chrono::seconds>(
+                                   chrono::steady_clock::now() - computerMoveStartTime)
                                    .count();
-            if (elapsedTime >= 2)
-            { // Wait for 2 seconds before making a move
+            if (elapsedTime >= 1)
+            { 
                 if (computerMove())
                 {
                     currentPlayer = 1;                            // Switch back to player
-                    startTime = std::chrono::steady_clock::now(); // Reset timer
+                    startTime = chrono::steady_clock::now(); // Reset timer
                 }
             }
         }
 
-        window.clear(sf::Color::White);
+        window.clear(Color::White);
 
         // Draw grid and beads
         for (int i = 0; i < GRID_SIZE; i++)
         {
             for (int j = 0; j < GRID_SIZE; j++)
             {
-                sf::RectangleShape cell(sf::Vector2f(CELL_SIZE, CELL_SIZE));
+                RectangleShape cell(Vector2f(CELL_SIZE, CELL_SIZE));
                 cell.setPosition(j * CELL_SIZE, i * CELL_SIZE);
-                cell.setFillColor(sf::Color::White);
+                cell.setFillColor(Color::White);
                 cell.setOutlineThickness(1);
-                cell.setOutlineColor(sf::Color::Black);
+                cell.setOutlineColor(Color::Black);
                 window.draw(cell);
 
                 if (board[i][j] == 1)
                 {
-                    sf::CircleShape bead(CELL_SIZE / 3);
-                    bead.setFillColor(sf::Color::Red);
+                    CircleShape bead(CELL_SIZE / 3);
+                    bead.setFillColor(Color::Red);
                     bead.setPosition(j * CELL_SIZE + CELL_SIZE / 6, i * CELL_SIZE + CELL_SIZE / 6);
                     window.draw(bead);
                 }
                 else if (board[i][j] == 2)
                 {
-                    sf::CircleShape bead(CELL_SIZE / 3);
-                    bead.setFillColor(sf::Color::Blue);
+                    CircleShape bead(CELL_SIZE / 3);
+                    bead.setFillColor(Color::Blue);
                     bead.setPosition(j * CELL_SIZE + CELL_SIZE / 6, i * CELL_SIZE + CELL_SIZE / 6);
                     window.draw(bead);
                 }
@@ -549,9 +561,9 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
         // Highlight valid moves
         for (auto &move : possibleMoves)
         {
-            sf::RectangleShape cell(sf::Vector2f(CELL_SIZE, CELL_SIZE));
+            RectangleShape cell(Vector2f(CELL_SIZE, CELL_SIZE));
             cell.setPosition(move.second * CELL_SIZE, move.first * CELL_SIZE);
-            cell.setFillColor(sf::Color(0, 255, 0, 128));
+            cell.setFillColor(Color(0, 255, 0, 128));
             window.draw(cell);
         }
 
@@ -565,7 +577,7 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
         window.draw(exitButton);
         window.draw(mainMenuButton);
 
-        std::stringstream ss;
+        stringstream ss;
         ss << "Time: " << timeRemaining << "s";
         timerText.setString(ss.str());
         window.draw(timerText);
@@ -573,19 +585,20 @@ bool playerVsComputer(sf::RenderWindow &window, sf::Font &font)
         // Draw win message if game is won
         if (gameWon)
         {
-            window.draw(winText);
+            window.clear(Color::White); // Clear the window with white color
+            window.draw(winText); // Only display the win message
+            window.display();
+            continue; // Skip the rest of the loop
         }
 
         window.display();
     }
-
-    return false; // Indicate that the game ended without returning to the main menu
 }
 
 bool computerMove()
 {
-    std::vector<std::tuple<int, int, int, int>> captureMoves; // Store capturing moves
-    std::vector<std::pair<int, int>> possibleMoves;           // Store simple moves
+    vector<tuple<int, int, int, int>> captureMoves; // Store capturing moves
+    vector<pair<int, int>> possibleMoves;           // Store simple moves
 
     for (int srcRow = 0; srcRow < GRID_SIZE; ++srcRow)
     {
@@ -641,41 +654,41 @@ bool computerMove()
 
 void startGame()
 {
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "6x6 Bead Grid");
+    RenderWindow window(VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "6x6 Bead Grid");
 
-    sf::Font font;
+    Font font;
     font.loadFromFile("arial.ttf");
 
     // Option buttons
-    sf::Text pvpButton("Player vs Player", font, 30);
+    Text pvpButton("Player vs Player", font, 30);
     pvpButton.setPosition(100, BOARD_SIZE / 2 - 50);
-    pvpButton.setFillColor(sf::Color::Black);
+    pvpButton.setFillColor(Color::Black);
 
-    sf::Text pvcButton("Player vs Computer", font, 30);
+    Text pvcButton("Player vs Computer", font, 30);
     pvcButton.setPosition(100, BOARD_SIZE / 2 + 10);
-    pvcButton.setFillColor(sf::Color::Black);
+    pvcButton.setFillColor(Color::Black);
 
-    sf::RectangleShape pvpButtonBg(sf::Vector2f(300, 50));
+    RectangleShape pvpButtonBg(Vector2f(300, 50));
     pvpButtonBg.setPosition(90, BOARD_SIZE / 2 - 55);
-    pvpButtonBg.setFillColor(sf::Color::Cyan);
+    pvpButtonBg.setFillColor(Color::Cyan);
 
-    sf::RectangleShape pvcButtonBg(sf::Vector2f(300, 50));
+    RectangleShape pvcButtonBg(Vector2f(300, 50));
     pvcButtonBg.setPosition(90, BOARD_SIZE / 2 + 5);
-    pvcButtonBg.setFillColor(sf::Color::Cyan);
+    pvcButtonBg.setFillColor(Color::Cyan);
 
     bool gameStarted = false;
     bool isPlayerVsComputer = false;
 
     while (window.isOpen())
     {
-        sf::Event event;
+        Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            if (event.type == Event::Closed)
                 window.close();
-            else if (!gameStarted && event.type == sf::Event::MouseButtonPressed)
+            else if (!gameStarted && event.type == Event::MouseButtonPressed)
             {
-                if (event.mouseButton.button == sf::Mouse::Left)
+                if (event.mouseButton.button == Mouse::Left)
                 {
                     int x = event.mouseButton.x;
                     int y = event.mouseButton.y;
@@ -694,7 +707,7 @@ void startGame()
             }
         }
 
-        window.clear(sf::Color::White);
+        window.clear(Color::White);
 
         if (!gameStarted)
         {
@@ -709,10 +722,8 @@ void startGame()
             if (isPlayerVsComputer)
             {
                 // Start Player vs Computer game
-                if (playerVsComputer(window, font))
-                {
-                    gameStarted = false; // Reset to show the menu after returning to the main menu
-                }
+                playerVsComputer(window, font);
+                gameStarted = false; // Reset to show the menu after the game ends or "Main Menu" is clicked
             }
             else
             {
@@ -725,64 +736,64 @@ void startGame()
                     for (int j = 0; j < GRID_SIZE; j++)
                         board[i][j] = 2; // Blue beads for Player 2
 
-                sf::Text saveButton("  Save", font, 30);
+                Text saveButton(" Save", font, 30);
                 saveButton.setPosition(50, BOARD_SIZE + 20);
-                saveButton.setFillColor(sf::Color::Black);
+                saveButton.setFillColor(Color::Black);
 
-                sf::Text loadButton("  Load", font, 30);
+                Text loadButton(" Load", font, 30);
                 loadButton.setPosition(200, BOARD_SIZE + 20);
-                loadButton.setFillColor(sf::Color::Black);
+                loadButton.setFillColor(Color::Black);
 
-                sf::Text exitButton("  Exit", font, 30);
+                Text exitButton(" Exit", font, 30);
                 exitButton.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
-                exitButton.setFillColor(sf::Color::Black);
+                exitButton.setFillColor(Color::Black);
 
-                sf::Text mainMenuButton("Main Menu", font, 30);
+                Text mainMenuButton("Main Menu", font, 30);
                 mainMenuButton.setPosition(350, BOARD_SIZE + 90); // Position next to the Exit button
-                mainMenuButton.setFillColor(sf::Color::Black);
+                mainMenuButton.setFillColor(Color::Black);
 
-                sf::Text timerText("", font, 30);
+                Text timerText("", font, 30);
                 timerText.setPosition(350, BOARD_SIZE + 20); // Adjusted position next to Load button
-                timerText.setFillColor(sf::Color::Black);
+                timerText.setFillColor(Color::Black);
 
-                sf::RectangleShape saveButtonBg(sf::Vector2f(100, 50));
+                RectangleShape saveButtonBg(Vector2f(100, 50));
                 saveButtonBg.setPosition(50, BOARD_SIZE + 20);
-                saveButtonBg.setFillColor(sf::Color::Cyan);
+                saveButtonBg.setFillColor(Color::Cyan);
 
-                sf::RectangleShape loadButtonBg(sf::Vector2f(100, 50));
+                RectangleShape loadButtonBg(Vector2f(100, 50));
                 loadButtonBg.setPosition(200, BOARD_SIZE + 20);
-                loadButtonBg.setFillColor(sf::Color::Cyan);
+                loadButtonBg.setFillColor(Color::Cyan);
 
-                sf::RectangleShape exitButtonBg(sf::Vector2f(100, 50));
+                RectangleShape exitButtonBg(Vector2f(100, 50));
                 exitButtonBg.setPosition(200, BOARD_SIZE + 90); // Position below the Load button
-                exitButtonBg.setFillColor(sf::Color::Red);
+                exitButtonBg.setFillColor(Color::Red);
 
-                sf::RectangleShape mainMenuButtonBg(sf::Vector2f(150, 50));
+                RectangleShape mainMenuButtonBg(Vector2f(150, 50));
                 mainMenuButtonBg.setPosition(350, BOARD_SIZE + 90);
-                mainMenuButtonBg.setFillColor(sf::Color::Yellow);
+                mainMenuButtonBg.setFillColor(Color::Yellow);
 
-                sf::Text winText("", font, 40);
+                Text winText("", font, 40);
                 winText.setPosition(50, BOARD_SIZE / 2 - 20);
-                winText.setFillColor(sf::Color::Black);
+                winText.setFillColor(Color::Black);
 
-                startTime = std::chrono::steady_clock::now();
+                startTime = chrono::steady_clock::now();
 
                 int selectedRow = -1, selectedCol = -1;
-                std::vector<std::pair<int, int>> possibleMoves;
+                vector<pair<int, int>> possibleMoves;
 
                 bool gameWon = false;
                 bool returnToMainMenu = false;
 
                 while (window.isOpen())
                 {
-                    sf::Event event;
+                    Event event;
                     while (window.pollEvent(event))
                     {
-                        if (event.type == sf::Event::Closed)
+                        if (event.type == Event::Closed)
                             window.close();
-                        else if (!gameWon && event.type == sf::Event::MouseButtonPressed)
+                        else if (!gameWon && event.type == Event::MouseButtonPressed)
                         {
-                            if (event.mouseButton.button == sf::Mouse::Left)
+                            if (event.mouseButton.button == Mouse::Left)
                             {
                                 int x = event.mouseButton.x;
                                 int y = event.mouseButton.y;
@@ -800,7 +811,6 @@ void startGame()
                                     else if (exitButtonBg.getGlobalBounds().contains(x, y))
                                     {
                                         window.close(); // Exit the game
-                                        exit(0);        // Ensure the program terminates
                                     }
                                     else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
                                     {
@@ -864,25 +874,25 @@ void startGame()
                         }
 
                         // Update timer display
-                        std::stringstream ss;
+                        stringstream ss;
                         ss << "Time: " << timeRemaining << "s";
                         timerText.setString(ss.str());
                     }
 
-                    window.clear(sf::Color::White);
+                    window.clear(Color::White);
 
                     // Draw grid
                     for (int i = 0; i <= GRID_SIZE; i++)
                     {
-                        sf::Vertex horizontalLine[] = {
-                            sf::Vertex(sf::Vector2f(0, i * CELL_SIZE), sf::Color::Black),
-                            sf::Vertex(sf::Vector2f(BOARD_SIZE, i * CELL_SIZE), sf::Color::Black)};
-                        window.draw(horizontalLine, 2, sf::Lines);
+                        Vertex horizontalLine[] = {
+                            Vertex(Vector2f(0, i * CELL_SIZE), Color::Black),
+                            Vertex(Vector2f(BOARD_SIZE, i * CELL_SIZE), Color::Black)};
+                        window.draw(horizontalLine, 2, Lines);
 
-                        sf::Vertex verticalLine[] = {
-                            sf::Vertex(sf::Vector2f(i * CELL_SIZE, 0), sf::Color::Black),
-                            sf::Vertex(sf::Vector2f(i * CELL_SIZE, BOARD_SIZE), sf::Color::Black)};
-                        window.draw(verticalLine, 2, sf::Lines);
+                        Vertex verticalLine[] = {
+                            Vertex(Vector2f(i * CELL_SIZE, 0), Color::Black),
+                            Vertex(Vector2f(i * CELL_SIZE, BOARD_SIZE), Color::Black)};
+                        window.draw(verticalLine, 2, Lines);
                     }
 
                     // Draw beads
@@ -890,8 +900,8 @@ void startGame()
                         for (int j = 0; j < GRID_SIZE; j++)
                             if (board[i][j] != 0)
                             {
-                                sf::CircleShape bead(CELL_SIZE / 3);
-                                bead.setFillColor(board[i][j] == 1 ? sf::Color::Red : sf::Color::Blue);
+                                CircleShape bead(CELL_SIZE / 3);
+                                bead.setFillColor(board[i][j] == 1 ? Color::Red : Color::Blue);
                                 bead.setPosition(j * CELL_SIZE + CELL_SIZE / 6, i * CELL_SIZE + CELL_SIZE / 6);
                                 window.draw(bead);
                             }
@@ -899,9 +909,9 @@ void startGame()
                     // Highlight valid moves
                     for (auto &move : possibleMoves)
                     {
-                        sf::RectangleShape cell(sf::Vector2f(CELL_SIZE, CELL_SIZE));
+                        RectangleShape cell(Vector2f(CELL_SIZE, CELL_SIZE));
                         cell.setPosition(move.second * CELL_SIZE, move.first * CELL_SIZE);
-                        cell.setFillColor(sf::Color(0, 255, 0, 128));
+                        cell.setFillColor(Color(0, 255, 0, 128));
                         window.draw(cell);
                     }
 
@@ -919,35 +929,49 @@ void startGame()
                     // Draw win message if game is won
                     if (gameWon)
                     {
-                        window.draw(winText);
+                        Text mainMenuButton("Exit", font, 30);
+                        mainMenuButton.setPosition(200, BOARD_SIZE + 50);
+                        mainMenuButton.setFillColor(Color::Black);
 
-                        // Keep the event loop active to allow interaction with buttons
+                        RectangleShape mainMenuButtonBg(Vector2f(150, 50));
+                        mainMenuButtonBg.setPosition(190, BOARD_SIZE + 50);
+                        mainMenuButtonBg.setFillColor(Color::Red);
+
                         while (window.isOpen())
                         {
-                            sf::Event event;
+                            window.clear(Color::White); // Clear the window with white color
+                            window.draw(winText); // Only display the win message
+                            window.draw(mainMenuButtonBg);
+                            window.draw(mainMenuButton);
+                            window.display();
+
+                            Event event;
                             while (window.pollEvent(event))
                             {
-                                if (event.type == sf::Event::Closed)
+                                if (event.type == Event::Closed)
                                 {
                                     window.close();
                                     exit(0);
                                 }
-                                else if (event.type == sf::Event::MouseButtonPressed)
+                                else if (event.type == Event::MouseButtonPressed)
                                 {
-                                    if (event.mouseButton.button == sf::Mouse::Left)
+                                    if (event.mouseButton.button == Mouse::Left)
                                     {
                                         int x = event.mouseButton.x;
                                         int y = event.mouseButton.y;
 
-                                        if (exitButtonBg.getGlobalBounds().contains(x, y))
+                                        if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
                                         {
-                                            window.close(); // Exit the game
-                                            exit(0);        // Ensure the program terminates
-                                        }
-                                        else if (mainMenuButtonBg.getGlobalBounds().contains(x, y))
-                                        {
-                                            returnToMainMenu = true; // Return to the main menu
-                                            return;                  // Exit the loop and reset the game
+                                            // Reset the game state and return to the main menu
+                                            for (int i = 0; i < GRID_SIZE; ++i)
+                                            {
+                                                for (int j = 0; j < GRID_SIZE; ++j)
+                                                {
+                                                    board[i][j] = 0;
+                                                }
+                                            }
+                                            currentPlayer = 1; // Reset to Player 1
+                                            return; // Exit the loop and show the main menu
                                         }
                                     }
                                 }
@@ -963,3 +987,4 @@ void startGame()
         window.display();
     }
 }
+
